@@ -32,5 +32,13 @@ export const api = {
       playerToken,
     }),
   submit: (code: string, playerToken: string) => call<{ ok: true }>(`/api/games/${code}/submit`, { method: "POST", playerToken }),
+  addQuestion: (code: string, adminToken: string, text: string) =>
+    call<{ id: string; position: number; text: string }>(`/api/games/${code}/questions`, {
+      method: "POST",
+      body: JSON.stringify({ text }),
+      adminToken,
+    }),
+  removeQuestion: (code: string, adminToken: string, questionId: string) =>
+    call<{ ok: true }>(`/api/games/${code}/questions`, { method: "DELETE", body: JSON.stringify({ questionId }), adminToken }),
   results: (code: string, adminToken: string) => call<ResultsResponse>(`/api/games/${code}/results`, { adminToken }),
 };

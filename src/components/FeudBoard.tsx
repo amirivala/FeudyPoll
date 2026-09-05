@@ -52,7 +52,7 @@ export function FeudBoard({ tallies, playerCount, colors, onExit }: { tallies: Q
     <main className="flex-1 flex flex-col px-5 sm:px-10 py-6 sm:py-8 max-w-6xl w-full mx-auto">
       <header className="flex items-baseline justify-between gap-4">
         <Label>
-          <span className="text-text">{String(t.question.position).padStart(2, "0")}</span> / {String(tallies.length).padStart(2, "0")}
+          <span className="text-text">{String(qi + 1).padStart(2, "0")}</span> / {String(tallies.length).padStart(2, "0")}
         </Label>
         <Label>{t.totalVotes} of {playerCount} voted</Label>
       </header>
@@ -71,7 +71,7 @@ export function FeudBoard({ tallies, playerCount, colors, onExit }: { tallies: Q
                 aria-label={open ? `${r.name}, ${r.count} votes` : `Reveal answer ${i + 1}`}
               >
                 <span className="mono text-[13px] text-faint">{String(i + 1).padStart(2, "0")}</span>
-                <span className="relative h-full border border-line rounded-[3px] overflow-hidden">
+                <span className="relative h-full bg-white/6 rounded-[10px] overflow-hidden">
                   <span
                     className="bar absolute inset-y-0 left-0"
                     style={{ width: open ? `${Math.max(pct, 12)}%` : "0%", background: colors[r.playerId] ?? "var(--text)" }}

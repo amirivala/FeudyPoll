@@ -10,9 +10,7 @@ import { FeudBoard } from "@/components/FeudBoard";
 export default function HostClient({ code }: { code: string }) {
   const fromUrl = useHashToken();
   const stored = useStoredAdminToken(code);
-  useEffect(() => {
-    if (fromUrl) setAdminToken(code, fromUrl);
-  }, [code, fromUrl]);
+  // Prefer the link's token; fall back to what this device saved. The link token is only saved once the server accepts it.
   const token = fromUrl === undefined || stored === undefined ? undefined : fromUrl ?? stored;
 
   if (token === undefined) return null;
@@ -33,6 +31,11 @@ function Dashboard({ code, adminToken }: { code: string; adminToken: string }) {
   const [hostMode, setHostMode] = useState(false);
   const [busy, setBusy] = useState(false);
   const colors = useMemo(() => colorMap(state?.players ?? []), [state?.players]);
+
+  const verified = state?.isAdmin === true;
+  useEffect(() => {
+    if (verified) setAdminToken(code, adminToken);
+  }, [verified, code, adminToken]);
 
   const loadResults = useCallback(async () => {
     try {
@@ -68,6 +71,14 @@ function Dashboard({ code, adminToken }: { code: string; adminToken: string }) {
 
   if (error && !state) return <Shell><Notice>{error}</Notice></Shell>;
   if (!state) return <Shell><p className="text-dim">Loading…</p></Shell>;
+  if (!state.isAdmin) {
+    return (
+      <Shell>
+        <Wordmark />
+        <div className="mt-10"><Notice>This host link doesn&apos;t match room {code}. Open the link you got when you created the room.</Notice></div>
+      </Shell>
+    );
+  }
 
   if (hostMode && results) {
     return <FeudBoard tallies={results.tallies} playerCount={results.playerCount} colors={colors} onExit={() => setHostMode(false)} />;
@@ -121,19 +132,21 @@ function Dashboard({ code, adminToken }: { code: string; adminToken: string }) {
           {lobby && <p className="m-0 text-[14px] text-dim">Starting locks the player list, since players are the answer choices. You can reopen it later.</p>}
         </section>
 
+        {lobby ? (
+          <QuestionEditor code={code} adminToken={adminToken} questions={state.questions} onChanged={refresh} />
+        ) : (
         <section>
           <div className="flex items-baseline justify-between border-b border-line pb-2">
             <Label>Tallies, host&apos;s eyes only</Label>
             {results && <Label>leader · votes</Label>}
           </div>
-          {lobby && <p className="text-dim text-[15px] mt-4">Nothing to count until voting starts.</p>}
           {results && !lobby && (
             <ol className="m-0 p-0 list-none flex flex-col divide-y divide-line">
-              {results.tallies.map((t) => {
+              {results.tallies.map((t, i) => {
                 const lead = t.rows[0];
                 return (
                   <li key={t.question.id} className="py-3 grid grid-cols-[2rem_1fr_auto] gap-3 items-baseline">
-                    <span className="mono text-[12px] text-faint">{String(t.question.position).padStart(2, "0")}</span>
+                    <span className="mono text-[12px] text-faint">{String(i + 1).padStart(2, "0")}</span>
                     <span className="text-[15px] leading-snug">{t.question.text}</span>
                     <span className="mono text-[13px] text-right whitespace-nowrap flex items-center gap-2 justify-end">
                       {lead ? (
@@ -151,7 +164,88 @@ function Dashboard({ code, adminToken }: { code: string; adminToken: string }) {
             </ol>
           )}
         </section>
+        )}
       </div>
     </Shell>
+  );
+}
+
+/** Lobby-only editor. The 35 defaults are a template: cut any, add your own. Locks when voting starts. */
+function QuestionEditor({ code, adminToken, questions, onChanged }: { code: string; adminToken: string; questions: { id: string; text: string }[]; onChanged: () => void }) {
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState<string | null>(null); // question id being removed, or "add"
+  const [error, setError] = useState<string | null>(null);
+
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
+    if (text.trim().length < 3) return;
+    setBusy("add");
+    setError(null);
+    try {
+      await api.addQuestion(code, adminToken, text);
+      setText("");
+      onChanged();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function remove(id: string) {
+    setBusy(id);
+    setError(null);
+    try {
+      await api.removeQuestion(code, adminToken, id);
+      onChanged();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <section>
+      <div className="flex items-baseline justify-between border-b border-line pb-2">
+        <Label>Questions · edit until you start</Label>
+        <Label>{questions.length}</Label>
+      </div>
+
+      <form onSubmit={add} className="flex gap-2 items-end mt-4">
+        <label className="flex-1 flex flex-col gap-1">
+          <span className="label">Add one (who is most likely to…)</span>
+          <input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Who would text their ex tonight?"
+            maxLength={200}
+            className="field text-[16px]"
+          />
+        </label>
+        <Button type="submit" disabled={busy !== null || text.trim().length < 3}>
+          {busy === "add" ? "Adding…" : "Add"}
+        </Button>
+      </form>
+      {error && <div className="mt-3"><Notice>{error}</Notice></div>}
+
+      <ol className="m-0 mt-4 p-0 list-none flex flex-col divide-y divide-line">
+        {questions.map((q, i) => (
+          <li key={q.id} className="py-2.5 grid grid-cols-[2rem_1fr_auto] gap-3 items-center">
+            <span className="mono text-[12px] text-faint">{String(i + 1).padStart(2, "0")}</span>
+            <span className="text-[15px] leading-snug">{q.text}</span>
+            <button
+              onClick={() => remove(q.id)}
+              disabled={busy !== null}
+              aria-label={`Remove question ${i + 1}`}
+              className="mono text-[12px] text-faint hover:text-red disabled:opacity-40 px-2 py-1"
+            >
+              remove
+            </button>
+          </li>
+        ))}
+        {questions.length === 0 && <li className="py-4 text-dim text-[15px]">No questions left. Add at least one to start.</li>}
+      </ol>
+    </section>
   );
 }

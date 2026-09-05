@@ -117,7 +117,7 @@ function Wizard({ code, session, state, onSubmitted }: { code: string; session: 
       <header className="flex items-baseline justify-between">
         <Wordmark />
         <Label>
-          <span className="text-text">{String(q.position).padStart(2, "0")}</span> / {String(questions.length).padStart(2, "0")}
+          <span className="text-text">{String(index + 1).padStart(2, "0")}</span> / {String(questions.length).padStart(2, "0")}
         </Label>
       </header>
 
@@ -132,11 +132,11 @@ function Wizard({ code, session, state, onSubmitted }: { code: string; session: 
               <button
                 onClick={() => pick(p.id)}
                 aria-pressed={selected}
-                className="w-full text-left flex items-center gap-4 px-4 py-3.5 border rounded-[3px] text-[17px] transition-colors"
+                className="w-full text-left flex items-center gap-4 px-4 py-3.5 border rounded-[10px] text-[17px] transition-colors"
                 style={
                   selected
                     ? { background: color, borderColor: color, color: "var(--bg)" }
-                    : { borderColor: "var(--line)" }
+                    : { borderColor: "transparent", background: "rgba(254,254,255,0.06)" }
                 }
               >
                 <span className="w-3 h-3 rounded-full shrink-0" style={{ background: selected ? "var(--bg)" : color }} aria-hidden />

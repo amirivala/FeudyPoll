@@ -4,7 +4,8 @@ import { useState } from "react";
 import { api } from "@/lib/client/api";
 import { setAdminToken, setPlayerSession } from "@/lib/client/storage";
 import { DEFAULT_QUESTIONS } from "@/lib/questions";
-import { Button, Label, Notice, Wordmark } from "@/components/ui";
+import { Button, Label, Notice } from "@/components/ui";
+import { Logo } from "@/components/Logo";
 
 const SAMPLE = [DEFAULT_QUESTIONS[15], DEFAULT_QUESTIONS[8], DEFAULT_QUESTIONS[22]];
 
@@ -44,8 +45,8 @@ export default function Landing() {
 
   return (
     <main className="flex-1 w-full max-w-6xl mx-auto px-5 sm:px-8 py-6 sm:py-10 flex flex-col">
-      <header className="flex items-baseline justify-between gap-4">
-        <Wordmark />
+      <header className="flex items-center justify-between gap-4">
+        <Logo size={22} />
         <Label className="hidden sm:block">35 questions · 4-letter room code · no accounts</Label>
       </header>
 
@@ -55,8 +56,8 @@ export default function Landing() {
             Everyone votes <em>on everyone.</em>
           </h1>
           <p className="mt-6 text-[17px] leading-[1.6] text-dim max-w-[36rem]">
-            Thirty-five questions about the people in the room. Answers stay secret until the host
-            reads them off the board, one at a time, Family Feud style.
+            Thirty-five questions about the people in the room, and the host can add or cut some.
+            Answers stay secret until the host reads them off the board, one at a time, Family Feud style.
           </p>
 
           <ol className="mt-10 m-0 p-0 list-none border-t border-line max-w-[36rem]">

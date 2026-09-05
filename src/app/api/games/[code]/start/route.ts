@@ -20,6 +20,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ code: s
         .select("id", { count: "exact", head: true })
         .eq("game_id", game.id);
       if ((count ?? 0) < 2) throw new ApiError(400, "Need at least 2 players to start");
+      const { count: qCount } = await supabaseAdmin()
+        .from("questions")
+        .select("id", { count: "exact", head: true })
+        .eq("game_id", game.id);
+      if ((qCount ?? 0) < 1) throw new ApiError(400, "Add at least one question before starting");
     }
     const { error } = await supabaseAdmin().from("games").update({ status }).eq("id", game.id);
     if (error) throw error;

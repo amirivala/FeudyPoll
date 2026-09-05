@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import { Logo } from "./Logo";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { line?: boolean; lg?: boolean };
@@ -9,11 +9,7 @@ export function Button({ line, lg, className = "", ...rest }: ButtonProps) {
 }
 
 export function Wordmark() {
-  return (
-    <Link href="/" className="serif text-[22px] no-underline hover:no-underline">
-      Feudy<span className="italic">Poll</span>
-    </Link>
-  );
+  return <Logo size={18} />;
 }
 
 export function Label({ children, className = "" }: { children: ReactNode; className?: string }) {
