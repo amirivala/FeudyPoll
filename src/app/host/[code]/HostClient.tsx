@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, type ResultsResponse } from "@/lib/client/api";
 import { colorMap } from "@/lib/client/colors";
-import { setAdminToken, useHashToken, useStoredAdminToken } from "@/lib/client/storage";
+import { setAdminToken, setPlayerSession, useHashToken, usePlayerSession, useStoredAdminToken } from "@/lib/client/storage";
 import { useGameState } from "@/lib/client/useGameState";
 import { Button, Label, Notice, Roster, Shell, Wordmark } from "@/components/ui";
 import { FeudBoard } from "@/components/FeudBoard";
@@ -130,6 +130,8 @@ function Dashboard({ code, adminToken }: { code: string; adminToken: string }) {
             )}
           </div>
           {lobby && <p className="m-0 text-[14px] text-dim">Starting locks the player list, since players are the answer choices. You can reopen it later.</p>}
+
+          <HostAsPlayer code={code} lobby={lobby} players={state.players} onJoined={refresh} />
         </section>
 
         {lobby ? (
@@ -247,5 +249,59 @@ function QuestionEditor({ code, adminToken, questions, onChanged }: { code: stri
         {questions.length === 0 && <li className="py-4 text-dim text-[15px]">No questions left. Add at least one to start.</li>}
       </ol>
     </section>
+  );
+}
+
+/** Lets the host vote too. On a phone they can simply join with the code; here they join on this device and get their ballot in a new tab. */
+function HostAsPlayer({ code, lobby, players, onJoined }: { code: string; lobby: boolean; players: { id: string; name: string }[]; onJoined: () => void }) {
+  const session = usePlayerSession(code);
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (session === undefined) return null;
+
+  const stillInRoom = session && players.some((p) => p.id === session.playerId);
+  if (session && stillInRoom) {
+    return (
+      <div className="border-t border-line pt-4">
+        <Label>You&apos;re playing as {session.name}</Label>
+        <p className="m-0 mt-1 text-[14px] text-dim">
+          <a href={`/play/${code}`} target="_blank" rel="noopener">Open your ballot in a new tab</a>, or vote from your phone by joining with the code.
+        </p>
+      </div>
+    );
+  }
+  if (!lobby) return null;
+
+  async function join(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await api.join(code, name);
+      setPlayerSession(res.code, { token: res.playerToken, name: res.name, playerId: res.playerId });
+      window.open(`/play/${res.code}`, "_blank", "noopener");
+      onJoined();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={join} className="border-t border-line pt-4 flex flex-col gap-3">
+      <Label>Playing too?</Label>
+      <p className="m-0 text-[14px] text-dim">Join from your phone with the code, or add yourself here and vote in a second tab.</p>
+      <div className="flex gap-2 items-end">
+        <label className="flex-1 flex flex-col gap-1">
+          <span className="label">Your name</span>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Amir" maxLength={20} className="field text-[16px]" />
+        </label>
+        <Button type="submit" line disabled={busy || !name.trim()}>{busy ? "Joining…" : "Join as a player"}</Button>
+      </div>
+      {error && <Notice>{error}</Notice>}
+    </form>
   );
 }
