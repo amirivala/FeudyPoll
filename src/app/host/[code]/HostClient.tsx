@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, type ResultsResponse } from "@/lib/client/api";
 import { setAdminToken, useHashToken, useStoredAdminToken } from "@/lib/client/storage";
 import { useGameState } from "@/lib/client/useGameState";
-import { Button, CodeBadge, Notice, Roster, Shell, Wordmark } from "@/components/ui";
+import { Arrow, Button, CodeBadge, Eyebrow, Notice, Roster, Shell, Wordmark } from "@/components/ui";
 import { FeudBoard } from "@/components/FeudBoard";
 
 export default function HostClient({ code }: { code: string }) {
@@ -65,7 +65,7 @@ function Dashboard({ code, adminToken }: { code: string; adminToken: string }) {
   }
 
   if (error && !state) return <Shell><Notice>{error}</Notice></Shell>;
-  if (!state) return <Shell><p className="text-muted text-center mt-20">Loading…</p></Shell>;
+  if (!state) return <Shell><p className="text-dim text-center mt-20">Loading…</p></Shell>;
 
   if (hostMode && results) {
     return <FeudBoard tallies={results.tallies} playerCount={results.playerCount} onExit={() => setHostMode(false)} />;
@@ -78,20 +78,20 @@ function Dashboard({ code, adminToken }: { code: string; adminToken: string }) {
     <Shell wide>
       <header className="flex items-center justify-between mb-8">
         <Wordmark small />
-        <span className="text-muted text-sm font-bold uppercase tracking-widest">Host · {state.game.status}</span>
+        <Eyebrow>Host · {state.game.status}</Eyebrow>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-        <section className="bg-ink-2/80 rounded-3xl p-6 border border-white/10 flex flex-col gap-5">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-widest text-muted mb-3">Players go to {joinUrl.replace(/^https?:\/\//, "")} and enter</p>
+        <section className="glass rounded-3xl p-6 flex flex-col gap-6">
+          <div className="flex flex-col gap-3">
+            <Eyebrow>Players go to {joinUrl.replace(/^https?:\/\//, "")} and enter</Eyebrow>
             <CodeBadge code={code} huge />
           </div>
 
-          <div>
-            <p className="text-sm font-bold uppercase tracking-widest text-muted mb-3">
+          <div className="flex flex-col gap-3">
+            <Eyebrow>
               {state.game.status === "lobby" ? `In the room · ${state.players.length}` : `Finished · ${submitted} of ${state.players.length}`}
-            </p>
+            </Eyebrow>
             <Roster players={state.players} showSubmitted={state.game.status !== "lobby"} />
           </div>
 
@@ -100,34 +100,34 @@ function Dashboard({ code, adminToken }: { code: string; adminToken: string }) {
           <div className="flex flex-wrap gap-3 mt-auto">
             {state.game.status === "lobby" && (
               <Button big onClick={() => setStatus("start")} disabled={busy || state.players.length < 2}>
-                {state.players.length < 2 ? "Need 2+ players" : "Start voting"}
+                {state.players.length < 2 ? "Need 2+ players" : "Start voting"} <Arrow />
               </Button>
             )}
             {state.game.status === "voting" && (
               <>
-                <Button tone="hot" big onClick={() => setHostMode(true)} disabled={!results}>
-                  Open the board
+                <Button big onClick={() => setHostMode(true)} disabled={!results}>
+                  Open the board <Arrow />
                 </Button>
-                <Button tone="ghost" onClick={() => setStatus("reopen")} disabled={busy}>Reopen lobby</Button>
-                <Button tone="ghost" onClick={() => setStatus("close")} disabled={busy}>End game</Button>
+                <Button tone="glass" onClick={() => setStatus("reopen")} disabled={busy}>Reopen lobby</Button>
+                <Button tone="glass" onClick={() => setStatus("close")} disabled={busy}>End game</Button>
               </>
             )}
             {state.game.status === "closed" && (
-              <Button tone="hot" big onClick={() => setHostMode(true)} disabled={!results}>Open the board</Button>
+              <Button big onClick={() => setHostMode(true)} disabled={!results}>Open the board <Arrow /></Button>
             )}
           </div>
         </section>
 
-        <section className="bg-ink-2/80 rounded-3xl p-6 border border-white/10">
-          <p className="text-sm font-bold uppercase tracking-widest text-muted mb-4">Live tallies</p>
-          {state.game.status === "lobby" && <p className="text-muted">Tallies appear once voting starts. Only you can see them.</p>}
+        <section className="glass rounded-3xl p-6">
+          <div className="mb-4"><Eyebrow>Live tallies</Eyebrow></div>
+          {state.game.status === "lobby" && <p className="text-dim text-[15px]">Tallies appear once voting starts. Only you can see them.</p>}
           {results && state.game.status !== "lobby" && (
             <ol className="flex flex-col divide-y divide-white/10">
               {results.tallies.map((t) => (
                 <li key={t.question.id} className="py-3 grid gap-1 sm:grid-cols-[2rem_1fr_auto] items-baseline">
-                  <span className="display text-muted">{t.question.position}</span>
-                  <span className="font-semibold">{t.question.text}</span>
-                  <span className="text-sm text-muted sm:text-right">
+                  <span className="text-faint tabular-nums">{t.question.position}</span>
+                  <span className="text-[15px] font-medium">{t.question.text}</span>
+                  <span className="text-[13px] text-dim sm:text-right">
                     {t.rows.length === 0 ? "—" : t.rows.slice(0, 3).map((r) => `${r.name} ${r.count}`).join(" · ")}
                   </span>
                 </li>

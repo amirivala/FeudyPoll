@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { api } from "@/lib/client/api";
 import { usePlayerSession, type PlayerSession } from "@/lib/client/storage";
 import { useGameState } from "@/lib/client/useGameState";
-import { Button, CodeBadge, Notice, Roster, Shell, Wordmark } from "@/components/ui";
+import { Arrow, Button, CodeBadge, Eyebrow, Notice, Ornament, Roster, Shell, Wordmark } from "@/components/ui";
 
 export default function PlayClient({ code }: { code: string }) {
   const session = usePlayerSession(code);
@@ -16,8 +16,8 @@ export default function PlayClient({ code }: { code: string }) {
         <div className="text-center mt-10 flex flex-col items-center gap-6">
           <Wordmark small />
           <CodeBadge code={code} />
-          <p className="text-muted">You haven&apos;t joined this room on this device.</p>
-          <Link href="/" className="underline text-marquee">Join with your name</Link>
+          <p className="text-dim text-[15px]">You haven&apos;t joined this room on this device.</p>
+          <Link href="/" className="underline">Join with your name</Link>
         </div>
       </Shell>
     );
@@ -29,7 +29,7 @@ function Game({ code, session }: { code: string; session: PlayerSession }) {
   const { state, error, refresh } = useGameState(code, { playerToken: session.token });
 
   if (error && !state) return <Shell><Notice>{error}</Notice></Shell>;
-  if (!state) return <Shell><p className="text-muted text-center mt-20">Loading…</p></Shell>;
+  if (!state) return <Shell><p className="text-dim text-center mt-20">Loading…</p></Shell>;
 
   if (state.me?.submitted) return <Submitted name={state.me.name} />;
   if (state.game.status === "lobby") return <Lobby code={code} state={state} />;
@@ -39,7 +39,7 @@ function Game({ code, session }: { code: string; session: PlayerSession }) {
         <div className="text-center mt-20 flex flex-col items-center gap-4">
           <Wordmark small />
           <p className="display text-3xl">This game is over.</p>
-          <p className="text-muted">Ask the host how you did.</p>
+          <p className="text-dim text-[15px]">Ask the host how you did.</p>
         </div>
       </Shell>
     );
@@ -54,12 +54,11 @@ function Lobby({ code, state }: { code: string; state: State }) {
     <Shell>
       <div className="flex flex-col items-center gap-6 mt-6 text-center">
         <Wordmark small />
+        <Ornament />
         <CodeBadge code={code} />
-        <p className="text-muted">Waiting for the host to start. Sit tight.</p>
-        <div className="w-full bg-ink-2/80 rounded-3xl p-5 border border-white/10 text-left">
-          <p className="text-sm font-bold uppercase tracking-widest text-muted mb-3">
-            In the room · {state.players.length}
-          </p>
+        <p className="text-dim text-[15px]">Waiting for the host to start. Sit tight.</p>
+        <div className="w-full glass rounded-3xl p-5 text-left">
+          <div className="mb-3"><Eyebrow>In the room · {state.players.length}</Eyebrow></div>
           <Roster players={state.players} meId={state.me?.id} />
         </div>
       </div>
@@ -115,7 +114,7 @@ function Wizard({ code, session, state, onSubmitted }: { code: string; session: 
     <Shell>
       <header className="flex items-center justify-between mb-4">
         <Wordmark small />
-        <span className="text-muted text-sm font-bold">{answered}/{questions.length} answered</span>
+        <span className="text-faint text-[13px]">{answered}/{questions.length} answered</span>
       </header>
 
       {/* Progress strip: one segment per question, lit when answered */}
@@ -123,14 +122,14 @@ function Wizard({ code, session, state, onSubmitted }: { code: string; session: 
         {questions.map((qq, i) => (
           <span
             key={qq.id}
-            className={`h-1.5 rounded-sm ${votes[qq.id] ? "bg-marquee" : "bg-ink-3"} ${i === index ? "outline outline-1 outline-paper" : ""}`}
+            className={`h-1 rounded-sm ${votes[qq.id] ? "bg-green" : "bg-white/15"} ${i === index ? "outline outline-1 outline-text" : ""}`}
           />
         ))}
       </div>
 
-      <section className="bg-ink-2/80 rounded-3xl p-6 border border-white/10">
-        <p className="text-sm font-bold uppercase tracking-widest text-muted">Question {q.position} of {questions.length}</p>
-        <h1 className="display text-3xl sm:text-4xl leading-tight mt-2 mb-6 text-paper">{q.text}</h1>
+      <section className="glass rounded-3xl p-6">
+        <Eyebrow>Question {q.position} of {questions.length}</Eyebrow>
+        <h1 className="display text-[clamp(24px,6vw,32px)] mt-2 mb-6 text-text">{q.text}</h1>
 
         <div className="grid grid-cols-2 gap-3">
           {others.map((p) => {
@@ -140,10 +139,10 @@ function Wizard({ code, session, state, onSubmitted }: { code: string; session: 
                 key={p.id}
                 onClick={() => pick(p.id)}
                 aria-pressed={selected}
-                className={`rounded-2xl px-3 py-4 text-lg font-extrabold break-words transition border-2 ${
+                className={`rounded-full px-3 py-[13px] text-[15px] font-medium break-words transition border ${
                   selected
-                    ? "bg-marquee text-ink border-marquee shadow-[0_4px_0_var(--marquee-deep)] scale-[1.02]"
-                    : "bg-ink text-paper border-white/10 hover:border-marquee/60"
+                    ? "bg-green text-bg border-green"
+                    : "bg-white/6 text-text border-white/14 hover:border-blue hover:bg-white/10"
                 }`}
               >
                 {p.name}
@@ -156,18 +155,19 @@ function Wizard({ code, session, state, onSubmitted }: { code: string; session: 
       </section>
 
       <nav className="flex items-center justify-between gap-3 mt-6">
-        <Button tone="ghost" onClick={() => setIndex((i) => Math.max(0, i - 1))} disabled={index === 0}>
-          ← Back
+        <Button tone="glass" onClick={() => setIndex((i) => Math.max(0, i - 1))} disabled={index === 0}>
+          Back
         </Button>
         {isLast ? (
-          <Button tone="hot" big onClick={submit} disabled={!allDone || saving}>
+          <Button big onClick={submit} disabled={!allDone || saving}>
             {saving ? "Sending…" : allDone ? "Submit answers" : `${questions.length - answered} left`}
+            {allDone && !saving && <Arrow />}
           </Button>
         ) : allDone ? (
-          <Button tone="hot" onClick={() => setIndex(questions.length - 1)}>Review & submit →</Button>
+          <Button onClick={() => setIndex(questions.length - 1)}>Review &amp; submit <Arrow /></Button>
         ) : (
-          <Button tone="ghost" onClick={() => setIndex((i) => Math.min(questions.length - 1, i + 1))}>
-            {votes[q.id] ? "Next →" : "Skip →"}
+          <Button tone="glass" onClick={() => setIndex((i) => Math.min(questions.length - 1, i + 1))}>
+            {votes[q.id] ? "Next" : "Skip"} <Arrow />
           </Button>
         )}
       </nav>
@@ -180,8 +180,9 @@ function Submitted({ name }: { name: string }) {
     <Shell>
       <div className="text-center mt-20 flex flex-col items-center gap-5">
         <Wordmark small />
-        <p className="display text-5xl text-marquee">You&apos;re in, {name}.</p>
-        <p className="text-muted text-lg max-w-xs">Your answers are locked. Now look up from your phone and watch the host&apos;s board.</p>
+        <Ornament />
+        <p className="display text-[clamp(30px,8vw,44px)] text-text">You&apos;re in, <span className="text-green">{name}</span>.</p>
+        <p className="text-dim text-[15px] leading-[1.7] max-w-xs">Your answers are locked. Now look up from your phone and watch the host&apos;s board.</p>
       </div>
     </Shell>
   );

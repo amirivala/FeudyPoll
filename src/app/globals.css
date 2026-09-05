@@ -1,77 +1,76 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #141a3a;
-  --ink-2: #1d2552;
-  --ink-3: #2a3470;
-  --paper: #f7f4ec;
-  --muted: #9aa3c7;
-  --marquee: #ffd447;
-  --marquee-deep: #e0b21f;
-  --hot: #ff4f9a;
-  --ok: #58e39b;
+  --bg: #1e1e1e;
+  --text: #fefeff;
+  --dim: rgba(254, 254, 255, 0.72);
+  --faint: rgba(254, 254, 255, 0.45);
+  --blue: #6489f4;
+  --green: #00ed95;
+  --red: #ff3a5e;
+  --purple: #8d51cb;
+  --glass: rgba(254, 254, 255, 0.07);
+  --glass-border: rgba(254, 254, 255, 0.14);
 }
 
 @theme inline {
-  --color-ink: var(--ink);
-  --color-ink-2: var(--ink-2);
-  --color-ink-3: var(--ink-3);
-  --color-paper: var(--paper);
-  --color-muted: var(--muted);
-  --color-marquee: var(--marquee);
-  --color-marquee-deep: var(--marquee-deep);
-  --color-hot: var(--hot);
-  --color-ok: var(--ok);
-  --font-display: var(--font-display);
-  --font-sans: var(--font-body);
+  --color-bg: var(--bg);
+  --color-text: var(--text);
+  --color-dim: var(--dim);
+  --color-faint: var(--faint);
+  --color-blue: var(--blue);
+  --color-green: var(--green);
+  --color-red: var(--red);
+  --color-purple: var(--purple);
+  --font-sans: var(--font-inter);
 }
 
 html { color-scheme: dark; }
 
 body {
-  background: var(--ink);
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255, 212, 71, 0.16), transparent 60%),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(255, 79, 154, 0.12), transparent 60%);
-  background-attachment: fixed;
-  color: var(--paper);
-  font-family: var(--font-body), system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-inter), "Inter", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-.display { font-family: var(--font-display), Impact, sans-serif; letter-spacing: 0.01em; }
+a { color: var(--text); text-decoration: none; }
+a:hover { color: var(--blue); }
 
-/* Marquee bulbs around the wordmark */
-.bulbs {
-  position: relative;
+/* Headline voice: Inter 600, tight tracking */
+.display { font-weight: 600; letter-spacing: -0.02em; line-height: 1.12; }
+
+/* Surfaces and controls */
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
 }
-.bulbs::before {
-  content: "";
-  position: absolute;
-  inset: -10px;
+.field {
+  background: rgba(254, 254, 255, 0.06);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
   border-radius: 999px;
-  background: radial-gradient(circle, var(--marquee) 0 2px, transparent 3px) 0 0 / 14px 14px repeat-x,
-    radial-gradient(circle, var(--marquee) 0 2px, transparent 3px) 0 100% / 14px 14px repeat-x;
-  opacity: 0.55;
-  pointer-events: none;
+  transition: border-color 150ms, background 150ms;
 }
+.field::placeholder { color: var(--faint); }
+.field:focus { outline: none; border-color: var(--blue); background: rgba(254, 254, 255, 0.09); }
+
+/* Ornament above headlines */
+.ornament { display: flex; align-items: center; gap: 16px; color: var(--purple); font-size: 18px; }
+.ornament::before { content: ""; width: 48px; height: 1px; background: linear-gradient(90deg, transparent, var(--purple)); }
+.ornament::after { content: ""; width: 48px; height: 1px; background: linear-gradient(90deg, var(--purple), transparent); }
 
 /* Feud board panel flip */
 .panel { perspective: 1000px; }
-.panel-inner {
-  position: relative;
-  transform-style: preserve-3d;
-  transition: transform 550ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
+.panel-inner { position: relative; transform-style: preserve-3d; transition: transform 550ms cubic-bezier(0.2, 0.8, 0.2, 1); }
 .panel.open .panel-inner { transform: rotateX(180deg); }
-.panel-face {
-  position: absolute; inset: 0;
-  backface-visibility: hidden;
-  display: flex; align-items: center;
-}
+.panel-face { position: absolute; inset: 0; backface-visibility: hidden; display: flex; align-items: center; }
 .panel-back { transform: rotateX(180deg); }
 
 @media (prefers-reduced-motion: reduce) {
   .panel-inner { transition: none; }
 }
 
-:focus-visible { outline: 3px solid var(--marquee); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
