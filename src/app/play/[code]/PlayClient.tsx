@@ -70,7 +70,7 @@ function Lobby({ code, state }: { code: string; state: State }) {
 function Wizard({ code, session, state, onSubmitted }: { code: string; session: PlayerSession; state: State; onSubmitted: () => void }) {
   const questions = state.questions;
   const colors = useMemo(() => colorMap(state.players), [state.players]);
-  const others = useMemo(() => state.players.filter((p) => p.id !== state.me?.id), [state.players, state.me?.id]);
+  const others = state.players; // everyone is on the ballot, yourself included
   const [votes, setVotes] = useState<Record<string, string>>(state.myVotes);
   const [index, setIndex] = useState(() => {
     const firstUnanswered = questions.findIndex((q) => !state.myVotes[q.id]);
@@ -140,7 +140,10 @@ function Wizard({ code, session, state, onSubmitted }: { code: string; session: 
                 }
               >
                 <span className="w-3 h-3 rounded-full shrink-0" style={{ background: selected ? "var(--bg)" : color }} aria-hidden />
-                <span className="flex-1">{p.name}</span>
+                <span className="flex-1">
+                  {p.name}
+                  {p.id === state.me?.id && <span className={selected ? "opacity-70" : "text-faint"}> (you)</span>}
+                </span>
                 {selected && <span className="mono text-[12px]">your pick</span>}
               </button>
             </li>

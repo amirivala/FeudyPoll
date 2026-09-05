@@ -6,7 +6,7 @@ just a name, then privately answer 35 "Who is most likely to…" questions by pi
 of the other players. Votes go only to the admin, who hosts a Family-Feud-style reveal.
 
 ## Decisions
-- No self-votes (a player cannot pick themselves).
+- Self-votes allowed (changed 2026-09-05 at Amir's request; originally blocked).
 - Player list locks when admin presses Start; admin can reopen the lobby.
 - Players never see results in-app; the admin's screen is the reveal.
 - Questions are stored per game so they can be edited without code changes.

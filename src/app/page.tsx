@@ -123,7 +123,7 @@ export default function Landing() {
 
       <footer className="mt-16 pt-4 border-t border-line flex flex-wrap justify-between gap-2">
         <Label>Votes are anonymous. Only the host sees the tallies.</Label>
-        <Label>You can&apos;t vote for yourself.</Label>
+        <Label>Yes, you can vote for yourself.</Label>
       </footer>
     </main>
   );

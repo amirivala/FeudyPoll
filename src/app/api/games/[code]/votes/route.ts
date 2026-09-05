@@ -12,7 +12,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ code: st
     if (me.submitted_at) throw new ApiError(409, "You already submitted your answers");
     const { questionId, targetId } = await readJson<{ questionId?: string; targetId?: string }>(req);
     if (!questionId || !targetId) throw new ApiError(400, "questionId and targetId are required");
-    if (targetId === me.id) throw new ApiError(400, "You can't vote for yourself");
 
     const db = supabaseAdmin();
     const [{ data: q }, { data: target }] = await Promise.all([

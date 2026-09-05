@@ -1,6 +1,6 @@
 # FeudyPoll
 
-A party game. One host creates a room and shares a 4-letter code. Friends join with just a name and privately answer 35 "Who is most likely to…" questions by picking one of the other players. Votes go only to the host, who reveals them Family-Feud style on a board.
+A party game. One host creates a room and shares a 4-letter code. Friends join with just a name and privately answer 35 "Who is most likely to…" questions by picking one of the players, themselves included. Votes go only to the host, who reveals them Family-Feud style on a board.
 
 ## How to play
 1. Host opens the site and taps **Start a new game**. Keep the host link (it holds your admin token).
