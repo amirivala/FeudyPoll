@@ -1,36 +1,21 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FeudyPoll
 
-## Getting Started
+A party game. One host creates a room and shares a 4-letter code. Friends join with just a name and privately answer 35 "Who is most likely to…" questions by picking one of the other players. Votes go only to the host, who reveals them Family-Feud style on a board.
 
-First, run the development server:
+## How to play
+1. Host opens the site and taps **Start a new game**. Keep the host link (it holds your admin token).
+2. Players open the site, enter the room code and their name.
+3. Once everyone is in, host taps **Start voting**. The player list locks.
+4. Players answer all 35 questions and tap **Submit answers**.
+5. Host taps **Open the board** and reveals answers one at a time (Space / → to reveal, ← to go back, Esc to exit).
 
+## Stack
+Next.js (App Router) on Vercel, Supabase Postgres + Realtime. Schema in `supabase/migrations`. Questions are seeded per game from `src/lib/questions.ts`.
+
+## Local dev
 ```bash
+cp .env.example .env.local   # fill in Supabase URL, anon key, service role key
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm test
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

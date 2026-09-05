@@ -41,7 +41,7 @@ export async function getGameByCode(code: string): Promise<GameRow> {
 }
 
 export function adminTokenFrom(req: Request): string | null {
-  return req.headers.get("x-admin-token") || new URL(req.url).searchParams.get("t");
+  return req.headers.get("x-admin-token");
 }
 
 export function playerTokenFrom(req: Request): string | null {

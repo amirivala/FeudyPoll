@@ -9,7 +9,7 @@ export type PublicPlayer = { id: string; name: string; submitted: boolean };
 export type PublicQuestion = { id: string; position: number; text: string };
 
 export type StateResponse = {
-  game: { code: string; status: GameStatus };
+  game: { id: string; code: string; status: GameStatus };
   players: PublicPlayer[];
   me: { id: string; name: string; submitted: boolean } | null;
   isAdmin: boolean;

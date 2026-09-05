@@ -44,7 +44,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ code: st
     }
 
     const res: StateResponse = {
-      game: { code: game.code, status: game.status },
+      game: { id: game.id, code: game.code, status: game.status },
       players: rows.map((p) => ({ id: p.id, name: p.name, submitted: !!p.submitted_at })),
       me: me ? { id: me.id, name: me.name, submitted: !!me.submitted_at } : null,
       isAdmin,
