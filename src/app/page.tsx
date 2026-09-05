@@ -3,11 +3,14 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/lib/client/api";
 import { setAdminToken, setPlayerSession } from "@/lib/client/storage";
-import { DEFAULT_QUESTIONS } from "@/lib/questions";
 import { Button, Label, Notice } from "@/components/ui";
 import { Logo } from "@/components/Logo";
 
-const SAMPLE = [DEFAULT_QUESTIONS[15], DEFAULT_QUESTIONS[8], DEFAULT_QUESTIONS[22]];
+const STEPS = [
+  "Everyone joins with the room code and their name.",
+  "Each person answers every question in secret, picking one of the others.",
+  "The host reveals the answers on the board, one at a time.",
+];
 
 export default function Landing() {
   const router = useRouter();
@@ -47,7 +50,7 @@ export default function Landing() {
     <main className="flex-1 w-full max-w-6xl mx-auto px-5 sm:px-8 py-6 sm:py-10 flex flex-col">
       <header className="flex items-center justify-between gap-4">
         <Logo size={22} />
-        <Label className="hidden sm:block">35 questions · 4-letter room code · no accounts</Label>
+        <Label className="hidden sm:block">One room code · no accounts</Label>
       </header>
 
       <div className="flex-1 grid gap-10 lg:gap-16 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] items-start mt-12 sm:mt-20 lg:mt-28">
@@ -56,15 +59,15 @@ export default function Landing() {
             Everyone votes <em>on everyone.</em>
           </h1>
           <p className="mt-6 text-[17px] leading-[1.6] text-dim max-w-[36rem]">
-            Thirty-five questions about the people in the room, and the host can add or cut some.
-            Answers stay secret until the host reads them off the board, one at a time, Family Feud style.
+            A stack of questions about the people in the room, and the host can add or cut some.
+            Answers stay secret until the host reads them off the board, Family Feud style.
           </p>
 
           <ol className="mt-10 m-0 p-0 list-none border-t border-line max-w-[36rem]">
-            {SAMPLE.map((q, i) => (
-              <li key={q} className="flex gap-4 py-3 border-b border-line">
-                <span className="mono text-[12px] text-faint pt-1.5 w-6 shrink-0">{String([16, 9, 23][i]).padStart(2, "0")}</span>
-                <span className="serif text-[clamp(20px,2.2vw,26px)]">{q}</span>
+            {STEPS.map((step, i) => (
+              <li key={step} className="flex gap-4 py-3 border-b border-line">
+                <span className="mono text-[12px] text-faint pt-1.5 w-6 shrink-0">{String(i + 1).padStart(2, "0")}</span>
+                <span className="serif text-[clamp(20px,2.2vw,26px)]">{step}</span>
               </li>
             ))}
           </ol>
