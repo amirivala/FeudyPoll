@@ -8,7 +8,7 @@ A party game. One host creates a room and shares a 4-letter code. Friends join w
 3. While the room is open, the host can remove any of the 35 template questions or add new ones.
 4. Once everyone is in, host taps **Lock the room and start voting**. Players and questions lock.
 5. Players answer every question and tap **Hand in your ballot**.
-6. Host taps **Open the board**. Each question is a round: the app names this round's guessers (half the room, rotating so turns even out), the host asks each one who they think is on the board and taps in their answer, then reveals the bars one at a time (Space / →) or all at once (A). A guess is worth the votes the guessed player got; off the board or a pass is 0. Points land as bars open, the scoreboard runs alongside, and **Final standings** shows at the end.
+6. Host taps **Open the board**. Each question is a round: the app names this round's guessers (half the room, rotating so turns even out), the host asks each one who they think is on the board and at which spot ("Amir, second"), taps in the name then the rank, then reveals the bars one at a time (Space / →) or all at once (A). Right name at the right spot is worth double that answer's votes; right name at the wrong spot (or no rank) is worth the votes; off the board or a pass is 0. Tied vote counts share a spot. Points land as bars open, the scoreboard runs alongside, and **Final standings** shows at the end.
 
 ## Stack
 Next.js (App Router) on Vercel, Supabase Postgres + Realtime. Schema in `supabase/migrations`. Each new game is seeded with the template in `src/lib/questions.ts`; the host edits the copy per game.

@@ -41,8 +41,8 @@ export const api = {
     }),
   removeQuestion: (code: string, adminToken: string, questionId: string) =>
     call<{ ok: true }>(`/api/games/${code}/questions`, { method: "DELETE", body: JSON.stringify({ questionId }), adminToken }),
-  setGuess: (code: string, adminToken: string, questionId: string, guesserId: string, guessedId: string | null) =>
-    call<{ ok: true }>(`/api/games/${code}/guesses`, { method: "PUT", body: JSON.stringify({ questionId, guesserId, guessedId }), adminToken }),
+  setGuess: (code: string, adminToken: string, questionId: string, guesserId: string, guessedId: string | null, guessedRank: number | null) =>
+    call<{ ok: true }>(`/api/games/${code}/guesses`, { method: "PUT", body: JSON.stringify({ questionId, guesserId, guessedId, guessedRank }), adminToken }),
   clearGuess: (code: string, adminToken: string, questionId: string, guesserId: string) =>
     call<{ ok: true }>(`/api/games/${code}/guesses`, { method: "DELETE", body: JSON.stringify({ questionId, guesserId }), adminToken }),
   results: (code: string, adminToken: string) => call<ResultsResponse>(`/api/games/${code}/results`, { adminToken }),

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import type { QuestionTally } from "@/lib/tally";
-import { pickGuessers, scoreGuesses, type Guess } from "@/lib/scoring";
+import { ordinal, pickGuessers, pointsFor, scoreGuesses, type Guess } from "@/lib/scoring";
 import { api } from "@/lib/client/api";
 import { Button, Label, Notice } from "./ui";
 
@@ -30,7 +30,7 @@ export function FeudBoard({ code, adminToken, tallies, players, colors, guesses,
   const [revealed, setRevealed] = useState(0);
   const [countOverride, setCountOverride] = useState<Record<number, number>>({});
   const [swaps, setSwaps] = useState<Record<number, Record<string, string>>>({});
-  const [picking, setPicking] = useState<{ guesserId: string; mode: "guess" | "swap" } | null>(null);
+  const [picking, setPicking] = useState<{ guesserId: string; mode: "guess" | "swap"; guessedId?: string } | null>(null);
   const [standings, setStandings] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -96,17 +96,23 @@ export function FeudBoard({ code, adminToken, tallies, players, colors, guesses,
     }
   }
 
-  async function record(guesserId: string, guessedId: string | null | "clear") {
+  async function record(guesserId: string, guessedId: string | null | "clear", rank: number | null = null) {
     if (!t) return;
     setPicking(null);
     setError(null);
     try {
       if (guessedId === "clear") await api.clearGuess(code, adminToken, t.question.id, guesserId);
-      else await api.setGuess(code, adminToken, t.question.id, guesserId, guessedId);
+      else await api.setGuess(code, adminToken, t.question.id, guesserId, guessedId, rank);
       onGuessChanged();
     } catch (e) {
       setError((e as Error).message);
     }
+  }
+
+  /** Step 1 of a guess: the name. Passing or clearing finishes immediately; a name moves on to the rank. */
+  function pickedName(guesserId: string, v: string | null | "clear") {
+    if (v === null || v === "clear") return record(guesserId, v);
+    setPicking({ guesserId, mode: "guess", guessedId: v });
   }
 
   function swap(from: string, to: string) {
@@ -174,7 +180,8 @@ export function FeudBoard({ code, adminToken, tallies, players, colors, guesses,
             <ul className="m-0 p-0 list-none flex flex-col divide-y divide-line">
               {guessers.map((gid) => {
                 const g = guessFor(gid);
-                const earned = scores.byQuestion[t.question.id]?.[gid];
+                const result = g ? pointsFor(t, g.guessed_id, g.guessed_rank) : null;
+                const earned = result?.points;
                 const showPts = g !== undefined && (allOpen || (g.guessed_id ? revealedIds.has(g.guessed_id) : false));
                 return (
                   <li key={gid} className="py-2.5 grid grid-cols-[auto_1fr_auto_auto] items-center gap-3">
@@ -184,10 +191,10 @@ export function FeudBoard({ code, adminToken, tallies, players, colors, guesses,
                       onClick={() => setPicking({ guesserId: gid, mode: "guess" })}
                       className={`mono text-[13px] px-3 py-1.5 rounded-[8px] ${g ? "bg-white/10 text-text" : "bg-white/6 text-faint"}`}
                     >
-                      {g ? (g.guessed_id ? `said ${nameOf[g.guessed_id]}` : "passed") : "enter guess"}
+                      {g ? (g.guessed_id ? `${nameOf[g.guessed_id]}${g.guessed_rank ? ` · ${ordinal(g.guessed_rank)}` : ""}` : "passed") : "enter guess"}
                     </button>
-                    <span className={`mono text-[15px] w-10 text-right ${showPts ? (earned ? "text-green" : "text-faint") : "text-faint/40"}`}>
-                      {showPts ? `+${earned ?? 0}` : "·"}
+                    <span className={`mono text-[13px] w-20 text-right ${showPts ? (earned ? "text-green" : "text-faint") : "text-faint/40"}`}>
+                      {showPts ? `+${earned ?? 0}${result?.exact ? " exact" : ""}` : "·"}
                     </span>
                     <span className="col-span-4 -mt-1">
                       <button onClick={() => setPicking({ guesserId: gid, mode: "swap" })} className="label hover:text-text">swap out</button>
@@ -203,13 +210,34 @@ export function FeudBoard({ code, adminToken, tallies, players, colors, guesses,
         </aside>
       </div>
 
-      {picking && (
+      {picking && picking.mode === "swap" && (
         <Picker
-          title={picking.mode === "guess" ? `${nameOf[picking.guesserId]} said…` : `Swap ${nameOf[picking.guesserId]} for…`}
-          options={picking.mode === "guess" ? players : players.filter((p) => !guessers.includes(p.id))}
-          colors={colors}
-          extra={picking.mode === "guess" ? [{ label: "passed", value: null }, ...(guessFor(picking.guesserId) ? [{ label: "clear", value: "clear" as const }] : [])] : []}
-          onPick={(v) => (picking.mode === "guess" ? record(picking.guesserId, v as string | null | "clear") : swap(picking.guesserId, v as string))}
+          title={`Swap ${nameOf[picking.guesserId]} for…`}
+          options={players.filter((p) => !guessers.includes(p.id)).map((p) => ({ value: p.id, label: p.name, color: colors[p.id] }))}
+          onPick={(v) => swap(picking.guesserId, v as string)}
+          onClose={() => setPicking(null)}
+        />
+      )}
+      {picking && picking.mode === "guess" && !picking.guessedId && (
+        <Picker
+          title={`${nameOf[picking.guesserId]} said…`}
+          options={[
+            ...players.map((p) => ({ value: p.id, label: p.name, color: colors[p.id] })),
+            { value: null, label: "passed", quiet: true },
+            ...(guessFor(picking.guesserId) ? [{ value: "clear" as const, label: "clear", quiet: true }] : []),
+          ]}
+          onPick={(v) => pickedName(picking.guesserId, v as string | null | "clear")}
+          onClose={() => setPicking(null)}
+        />
+      )}
+      {picking && picking.mode === "guess" && picking.guessedId && (
+        <Picker
+          title={`${nameOf[picking.guessedId]} would be…`}
+          options={[
+            ...Array.from({ length: Math.max(1, rows.length) }, (_, i) => ({ value: String(i + 1), label: ordinal(i + 1) })),
+            { value: null, label: "no rank, just the name", quiet: true },
+          ]}
+          onPick={(v) => record(picking.guesserId, picking.guessedId!, v === null ? null : Number(v))}
           onClose={() => setPicking(null)}
         />
       )}
@@ -296,7 +324,9 @@ function Standings({ players, colors, totals, onBack, onExit }: { players: Playe
   );
 }
 
-function Picker({ title, options, colors, extra, onPick, onClose }: { title: string; options: Player[]; colors: Record<string, string>; extra: { label: string; value: null | "clear" }[]; onPick: (v: string | null | "clear") => void; onClose: () => void }) {
+type Option = { value: string | null | "clear"; label: string; color?: string; quiet?: boolean };
+
+function Picker({ title, options, onPick, onClose }: { title: string; options: Option[]; onPick: (v: string | null | "clear") => void; onClose: () => void }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -307,17 +337,18 @@ function Picker({ title, options, colors, extra, onPick, onClose }: { title: str
       <div className="w-full max-w-lg bg-[#242424] border border-line rounded-[14px] p-5" onClick={(e) => e.stopPropagation()}>
         <p className="serif text-[26px] m-0 mb-4">{title}</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {options.map((p) => (
-            <button key={p.id} onClick={() => onPick(p.id)} className="flex items-center gap-3 px-4 py-3 rounded-[10px] bg-white/6 hover:bg-white/12 text-left text-[15px]">
-              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: colors[p.id] }} aria-hidden />
-              <span className="truncate">{p.name}</span>
-            </button>
-          ))}
-          {extra.map((x) => (
-            <button key={x.label} onClick={() => onPick(x.value)} className="px-4 py-3 rounded-[10px] bg-transparent border border-line hover:border-text text-left mono text-[13px] text-dim">
-              {x.label}
-            </button>
-          ))}
+          {options.map((o) =>
+            o.quiet ? (
+              <button key={o.label} onClick={() => onPick(o.value)} className="col-span-2 sm:col-span-3 px-4 py-3 rounded-[10px] bg-transparent border border-line hover:border-text text-left mono text-[13px] text-dim">
+                {o.label}
+              </button>
+            ) : (
+              <button key={o.label} onClick={() => onPick(o.value)} className="flex items-center gap-3 px-4 py-3 rounded-[10px] bg-white/6 hover:bg-white/12 text-left text-[15px]">
+                {o.color && <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: o.color }} aria-hidden />}
+                <span className="truncate">{o.label}</span>
+              </button>
+            ),
+          )}
         </div>
       </div>
     </div>

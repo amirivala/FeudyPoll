@@ -15,7 +15,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ code: st
         db.from("questions").select("id, position, text").eq("game_id", game.id),
         db.from("players").select("id, name, submitted_at").eq("game_id", game.id),
         db.from("votes").select("question_id, voter_id, target_id").eq("game_id", game.id),
-        db.from("guesses").select("question_id, guesser_id, guessed_id").eq("game_id", game.id),
+        db.from("guesses").select("question_id, guesser_id, guessed_id, guessed_rank").eq("game_id", game.id),
       ]);
     if (qErr || pErr || vErr || gErr) throw qErr ?? pErr ?? vErr ?? gErr;
     const tallies = tallyVotes(questions as Question[], players as Player[], votes as Vote[]);
