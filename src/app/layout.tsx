@@ -8,7 +8,7 @@ const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"], variab
 
 export const metadata: Metadata = {
   title: "FeudyPoll",
-  description: "Thirty-five questions. Everyone votes on everyone. Only the host sees the board.",
+  description: "Everyone votes on everyone. Only the host sees the board.",
 };
 
 export const viewport: Viewport = { themeColor: "#1e1e1e", width: "device-width", initialScale: 1 };
