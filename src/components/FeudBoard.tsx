@@ -47,6 +47,10 @@ export function FeudBoard({ code, adminToken, tallies, players, colors, guesses,
   }, [players, qi, countOverride, swaps]);
 
   const guessFor = (guesserId: string) => guesses.find((g) => g.question_id === t?.question.id && g.guesser_id === guesserId);
+  const roundGuesses = (except: string) => guesses.filter((g) => g.question_id === t?.question.id && g.guesser_id !== except);
+  /** Names and spots other guessers already claimed this round. Once placed, nobody else can say it. */
+  const takenNames = (except: string) => new Set(roundGuesses(except).map((g) => g.guessed_id).filter(Boolean) as string[]);
+  const takenRanks = (except: string) => new Set(roundGuesses(except).map((g) => g.guessed_rank).filter(Boolean) as number[]);
   const revealedIds = new Set(rows.slice(0, revealed).map((r) => r.playerId));
   const allOpen = revealed >= rows.length;
 
@@ -194,7 +198,7 @@ export function FeudBoard({ code, adminToken, tallies, players, colors, guesses,
                       {g ? (g.guessed_id ? `${nameOf[g.guessed_id]}${g.guessed_rank ? ` · ${ordinal(g.guessed_rank)}` : ""}` : "passed") : "enter guess"}
                     </button>
                     <span className={`mono text-[13px] w-20 text-right ${showPts ? (earned ? "text-green" : "text-faint") : "text-faint/40"}`}>
-                      {showPts ? `+${earned ?? 0}${result?.exact ? " exact" : ""}` : "·"}
+                      {showPts ? `+${earned ?? 0}` : "·"}
                     </span>
                     <span className="col-span-4 -mt-1">
                       <button onClick={() => setPicking({ guesserId: gid, mode: "swap" })} className="label hover:text-text">swap out</button>
@@ -222,7 +226,9 @@ export function FeudBoard({ code, adminToken, tallies, players, colors, guesses,
         <Picker
           title={`${nameOf[picking.guesserId]} said…`}
           options={[
-            ...players.map((p) => ({ value: p.id, label: p.name, color: colors[p.id] })),
+            ...players
+              .filter((p) => !takenNames(picking.guesserId).has(p.id))
+              .map((p) => ({ value: p.id, label: p.name, color: colors[p.id] })),
             { value: null, label: "passed", quiet: true },
             ...(guessFor(picking.guesserId) ? [{ value: "clear" as const, label: "clear", quiet: true }] : []),
           ]}
@@ -233,11 +239,10 @@ export function FeudBoard({ code, adminToken, tallies, players, colors, guesses,
       {picking && picking.mode === "guess" && picking.guessedId && (
         <Picker
           title={`${nameOf[picking.guessedId]} would be…`}
-          options={[
-            ...Array.from({ length: Math.max(1, rows.length) }, (_, i) => ({ value: String(i + 1), label: ordinal(i + 1) })),
-            { value: null, label: "no rank, just the name", quiet: true },
-          ]}
-          onPick={(v) => record(picking.guesserId, picking.guessedId!, v === null ? null : Number(v))}
+          options={Array.from({ length: Math.max(1, rows.length) }, (_, i) => i + 1)
+            .filter((r) => !takenRanks(picking.guesserId).has(r))
+            .map((r) => ({ value: String(r), label: ordinal(r) }))}
+          onPick={(v) => record(picking.guesserId, picking.guessedId!, Number(v))}
           onClose={() => setPicking(null)}
         />
       )}

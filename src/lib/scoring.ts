@@ -10,18 +10,16 @@ export type Scores = {
 };
 
 /**
- * Family Feud rule scaled to the room: a correct name is worth the votes that
- * player got on this question. Off the board, or passed, is 0. The called rank
- * doesn't change the points; `exact` just says whether they nailed the spot
- * (tied counts share a spot).
+ * Exact or nothing: the guess must name the right player at the right spot on the
+ * board to earn that answer's votes. Anything else (wrong spot, off the board,
+ * no rank, passed) is 0. Tied vote counts share a spot.
  */
 export function pointsFor(t: QuestionTally, guessedId: string | null, rank: number | null): { points: number; exact: boolean } {
-  if (!guessedId) return { points: 0, exact: false };
+  if (!guessedId || !rank) return { points: 0, exact: false };
   const row = t.rows.find((r) => r.playerId === guessedId);
-  if (!row) return { points: 0, exact: false };
-  const atRank = rank ? t.rows[rank - 1] : undefined;
-  const exact = !!atRank && atRank.count === row.count;
-  return { points: row.count, exact };
+  const atRank = t.rows[rank - 1];
+  if (!row || !atRank || atRank.count !== row.count) return { points: 0, exact: false };
+  return { points: row.count, exact: true };
 }
 
 export function scoreGuesses(tallies: QuestionTally[], guesses: Guess[]): Scores {

@@ -14,6 +14,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ code: st
     if (!questionId || !guesserId) throw new ApiError(400, "questionId and guesserId are required");
     const rank = guessedRank == null ? null : Number(guessedRank);
     if (rank !== null && (!Number.isInteger(rank) || rank < 1 || rank > 50)) throw new ApiError(400, "guessedRank must be a whole number from 1");
+    if (guessedId && rank === null) throw new ApiError(400, "A guess needs a spot on the board too");
 
     const db = supabaseAdmin();
     const ids = [guesserId, ...(guessedId ? [guessedId] : [])];
@@ -27,6 +28,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ code: st
     const { error } = await db
       .from("guesses")
       .upsert({ game_id: game.id, question_id: questionId, guesser_id: guesserId, guessed_id: guessedId ?? null, guessed_rank: guessedId ? rank : null }, { onConflict: "question_id,guesser_id" });
+    if (error?.code === "23505") throw new ApiError(409, "That name or that spot is already taken this round");
     if (error) throw error;
     return json({ ok: true });
   });

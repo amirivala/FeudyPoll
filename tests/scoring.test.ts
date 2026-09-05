@@ -21,9 +21,9 @@ const tie: QuestionTally = {
 };
 
 describe("pointsFor", () => {
-  it("pays the votes for the right name at the right rank, and flags it exact", () => expect(pointsFor(q1, "p1", 2)).toEqual({ points: 2, exact: true }));
-  it("pays the same for the right name at the wrong rank", () => expect(pointsFor(q1, "p1", 1)).toEqual({ points: 2, exact: false }));
-  it("pays face value when no rank was given", () => expect(pointsFor(q1, "p2", null)).toEqual({ points: 3, exact: false }));
+  it("pays the votes for the right name at the right rank", () => expect(pointsFor(q1, "p1", 2)).toEqual({ points: 2, exact: true }));
+  it("pays nothing for the right name at the wrong rank", () => expect(pointsFor(q1, "p1", 1)).toEqual({ points: 0, exact: false }));
+  it("pays nothing when no rank was given", () => expect(pointsFor(q1, "p2", null)).toEqual({ points: 0, exact: false }));
   it("pays nothing off the board or for a pass", () => {
     expect(pointsFor(q1, "p9", 1)).toEqual({ points: 0, exact: false });
     expect(pointsFor(q1, null, 1)).toEqual({ points: 0, exact: false });
@@ -37,12 +37,12 @@ describe("pointsFor", () => {
 describe("scoreGuesses", () => {
   it("sums per question and overall", () => {
     const s = scoreGuesses([q1, tie], [
-      { question_id: "q1", guesser_id: "p1", guessed_id: "p2", guessed_rank: 1 }, // 3
-      { question_id: "q1", guesser_id: "p3", guessed_id: "p3", guessed_rank: 1 }, // wrong rank, still 1
-      { question_id: "q2", guesser_id: "p1", guessed_id: null, guessed_rank: null }, // 0
+      { question_id: "q1", guesser_id: "p1", guessed_id: "p2", guessed_rank: 1 }, // exact -> 3
+      { question_id: "q1", guesser_id: "p3", guessed_id: "p3", guessed_rank: 2 }, // wrong spot -> 0
+      { question_id: "q2", guesser_id: "p1", guessed_id: null, guessed_rank: null }, // passed -> 0
     ]);
-    expect(s.byQuestion.q1).toEqual({ p1: 3, p3: 1 });
-    expect(s.totals).toEqual({ p1: 3, p3: 1 });
+    expect(s.byQuestion.q1).toEqual({ p1: 3, p3: 0 });
+    expect(s.totals).toEqual({ p1: 3, p3: 0 });
   });
 });
 
