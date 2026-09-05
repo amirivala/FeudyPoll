@@ -3,7 +3,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/lib/client/api";
 import { setAdminToken, setPlayerSession } from "@/lib/client/storage";
-import { Arrow, Button, Notice, Ornament, Wordmark } from "@/components/ui";
+import { DEFAULT_QUESTIONS } from "@/lib/questions";
+import { Button, Label, Notice, Wordmark } from "@/components/ui";
+
+const SAMPLE = [DEFAULT_QUESTIONS[15], DEFAULT_QUESTIONS[8], DEFAULT_QUESTIONS[22]];
 
 export default function Landing() {
   const router = useRouter();
@@ -40,54 +43,84 @@ export default function Landing() {
   }
 
   return (
-    <section className="w-full min-h-screen flex flex-col">
-      <nav className="flex flex-wrap items-center justify-between gap-4 px-[clamp(20px,5.5vw,80px)] py-[clamp(16px,3vw,32px)]">
+    <main className="flex-1 w-full max-w-6xl mx-auto px-5 sm:px-8 py-6 sm:py-10 flex flex-col">
+      <header className="flex items-baseline justify-between gap-4">
         <Wordmark />
-        <Button tone="glass" onClick={host} disabled={busy !== null}>
-          {busy === "host" ? "Setting up…" : "Host a game"}
-        </Button>
-      </nav>
+        <Label className="hidden sm:block">35 questions · 4-letter room code · no accounts</Label>
+      </header>
 
-      <div className="my-auto flex flex-col items-center text-center px-[clamp(20px,8vw,120px)] py-[clamp(40px,8vh,96px)]">
-        <div className="mb-[clamp(20px,3vh,32px)]"><Ornament /></div>
-        <h1 className="display text-[clamp(30px,5.2vw,44px)] text-text m-0 mb-5 sm:whitespace-nowrap">
-          Vote on your friends. <span className="text-blue">Reveal the board.</span>
-        </h1>
-        <p className="text-[15px] leading-[1.7] text-dim m-0 mb-9 max-w-[34rem]">
-          Thirty-five questions about the people in the room. Everyone votes in secret,
-          <br className="hidden sm:block" /> and the host reveals the answers like a game show.
-        </p>
+      <div className="flex-1 grid gap-10 lg:gap-16 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] items-start mt-12 sm:mt-20 lg:mt-28">
+        <div>
+          <h1 className="serif text-[clamp(40px,7vw,88px)] m-0 text-balance">
+            Everyone votes <em>on everyone.</em>
+          </h1>
+          <p className="mt-6 text-[17px] leading-[1.6] text-dim max-w-[36rem]">
+            Thirty-five questions about the people in the room. Answers stay secret until the host
+            reads them off the board, one at a time, Family Feud style.
+          </p>
 
-        <form onSubmit={join} className="w-full max-w-[26rem] flex flex-col gap-3">
-          <div className="flex flex-col sm:flex-row gap-3">
+          <ol className="mt-10 m-0 p-0 list-none border-t border-line max-w-[36rem]">
+            {SAMPLE.map((q, i) => (
+              <li key={q} className="flex gap-4 py-3 border-b border-line">
+                <span className="mono text-[12px] text-faint pt-1.5 w-6 shrink-0">{String([16, 9, 23][i]).padStart(2, "0")}</span>
+                <span className="serif text-[clamp(20px,2.2vw,26px)]">{q}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        <form onSubmit={join} className="ballot p-6 sm:p-8 flex flex-col gap-6 lg:mt-4">
+          <div className="flex items-baseline justify-between">
+            <Label>Ballot</Label>
+            <Label>Fill in both lines</Label>
+          </div>
+
+          <label className="flex flex-col gap-1">
+            <span className="label">Room code</span>
             <input
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4))}
-              placeholder="CODE"
-              aria-label="Room code"
+              placeholder="ABCD"
               autoCapitalize="characters"
               autoComplete="off"
-              className="field display text-center text-[20px] tracking-[0.35em] px-5 py-[13px] sm:w-[9.5rem]"
+              className="field mono text-[28px] tracking-[0.3em]"
               required
               minLength={4}
             />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="label">Your name, as your friends say it</span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
-              aria-label="Your name"
+              placeholder="Sam"
               maxLength={20}
               autoComplete="nickname"
-              className="field flex-1 text-[15px] px-6 py-[13px]"
+              className="field text-[20px]"
               required
             />
-          </div>
+          </label>
+
           {error && <Notice>{error}</Notice>}
-          <Button type="submit" big className="self-center mt-1" disabled={busy !== null || code.length < 4 || !name.trim()}>
-            {busy === "join" ? "Joining…" : "Join the game"} <Arrow />
+
+          <Button type="submit" lg disabled={busy !== null || code.length < 4 || !name.trim()}>
+            {busy === "join" ? "Joining…" : "Join the room"}
           </Button>
+
+          <p className="m-0 text-[14px] text-dim">
+            Hosting?{" "}
+            <button type="button" onClick={host} disabled={busy !== null} className="underline underline-offset-[3px] decoration-faint hover:decoration-text disabled:opacity-40">
+              {busy === "host" ? "Opening a room…" : "Open a new room"}
+            </button>
+            . You&apos;ll get the code to read out.
+          </p>
         </form>
       </div>
-    </section>
+
+      <footer className="mt-16 pt-4 border-t border-line flex flex-wrap justify-between gap-2">
+        <Label>Votes are anonymous. Only the host sees the tallies.</Label>
+        <Label>You can&apos;t vote for yourself.</Label>
+      </footer>
+    </main>
   );
 }

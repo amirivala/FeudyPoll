@@ -1,9 +1,10 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, type ResultsResponse } from "@/lib/client/api";
+import { colorMap } from "@/lib/client/colors";
 import { setAdminToken, useHashToken, useStoredAdminToken } from "@/lib/client/storage";
 import { useGameState } from "@/lib/client/useGameState";
-import { Arrow, Button, CodeBadge, Eyebrow, Notice, Roster, Shell, Wordmark } from "@/components/ui";
+import { Button, Label, Notice, Roster, Shell, Wordmark } from "@/components/ui";
 import { FeudBoard } from "@/components/FeudBoard";
 
 export default function HostClient({ code }: { code: string }) {
@@ -18,7 +19,7 @@ export default function HostClient({ code }: { code: string }) {
   if (!token) {
     return (
       <Shell>
-        <Notice>This device doesn&apos;t have the host link for room {code}. Open the host link you got when you created the game.</Notice>
+        <Notice>This device doesn&apos;t have the host link for room {code}. Open the link you got when you created the room.</Notice>
       </Shell>
     );
   }
@@ -31,6 +32,7 @@ function Dashboard({ code, adminToken }: { code: string; adminToken: string }) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [hostMode, setHostMode] = useState(false);
   const [busy, setBusy] = useState(false);
+  const colors = useMemo(() => colorMap(state?.players ?? []), [state?.players]);
 
   const loadResults = useCallback(async () => {
     try {
@@ -65,73 +67,87 @@ function Dashboard({ code, adminToken }: { code: string; adminToken: string }) {
   }
 
   if (error && !state) return <Shell><Notice>{error}</Notice></Shell>;
-  if (!state) return <Shell><p className="text-dim text-center mt-20">Loading…</p></Shell>;
+  if (!state) return <Shell><p className="text-dim">Loading…</p></Shell>;
 
   if (hostMode && results) {
-    return <FeudBoard tallies={results.tallies} playerCount={results.playerCount} onExit={() => setHostMode(false)} />;
+    return <FeudBoard tallies={results.tallies} playerCount={results.playerCount} colors={colors} onExit={() => setHostMode(false)} />;
   }
 
-  const joinUrl = typeof window !== "undefined" ? `${window.location.origin}/` : "/";
+  const joinHost = typeof window !== "undefined" ? window.location.host : "";
   const submitted = state.players.filter((p) => p.submitted).length;
+  const lobby = state.game.status === "lobby";
 
   return (
     <Shell wide>
-      <header className="flex items-center justify-between mb-8">
-        <Wordmark small />
-        <Eyebrow>Host · {state.game.status}</Eyebrow>
+      <header className="flex items-baseline justify-between gap-4">
+        <Wordmark />
+        <Label>Host · {state.game.status}</Label>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-        <section className="glass rounded-3xl p-6 flex flex-col gap-6">
-          <div className="flex flex-col gap-3">
-            <Eyebrow>Players go to {joinUrl.replace(/^https?:\/\//, "")} and enter</Eyebrow>
-            <CodeBadge code={code} huge />
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] mt-10 sm:mt-14">
+        <section className="flex flex-col gap-8">
+          <div>
+            <Label>Tell everyone: go to {joinHost} and type</Label>
+            <p className="mono text-[clamp(64px,14vw,128px)] leading-none tracking-[0.12em] m-0 mt-2">{code}</p>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <Eyebrow>
-              {state.game.status === "lobby" ? `In the room · ${state.players.length}` : `Finished · ${submitted} of ${state.players.length}`}
-            </Eyebrow>
-            <Roster players={state.players} showSubmitted={state.game.status !== "lobby"} />
+          <div>
+            <div className="flex items-baseline justify-between border-b border-line pb-2">
+              <Label>{lobby ? "In the room" : "Ballots in"}</Label>
+              <Label>{lobby ? state.players.length : `${submitted} / ${state.players.length}`}</Label>
+            </div>
+            <Roster players={state.players} colors={colors} showSubmitted={!lobby} />
           </div>
 
           {actionError && <Notice>{actionError}</Notice>}
 
-          <div className="flex flex-wrap gap-3 mt-auto">
-            {state.game.status === "lobby" && (
-              <Button big onClick={() => setStatus("start")} disabled={busy || state.players.length < 2}>
-                {state.players.length < 2 ? "Need 2+ players" : "Start voting"} <Arrow />
+          <div className="flex flex-wrap gap-2">
+            {lobby && (
+              <Button lg onClick={() => setStatus("start")} disabled={busy || state.players.length < 2}>
+                {state.players.length < 2 ? "Need two people to start" : "Lock the room and start voting"}
               </Button>
             )}
             {state.game.status === "voting" && (
               <>
-                <Button big onClick={() => setHostMode(true)} disabled={!results}>
-                  Open the board <Arrow />
-                </Button>
-                <Button tone="glass" onClick={() => setStatus("reopen")} disabled={busy}>Reopen lobby</Button>
-                <Button tone="glass" onClick={() => setStatus("close")} disabled={busy}>End game</Button>
+                <Button lg onClick={() => setHostMode(true)} disabled={!results}>Open the board</Button>
+                <Button line onClick={() => setStatus("reopen")} disabled={busy}>Let more people in</Button>
+                <Button line onClick={() => setStatus("close")} disabled={busy}>End game</Button>
               </>
             )}
             {state.game.status === "closed" && (
-              <Button big onClick={() => setHostMode(true)} disabled={!results}>Open the board <Arrow /></Button>
+              <Button lg onClick={() => setHostMode(true)} disabled={!results}>Open the board</Button>
             )}
           </div>
+          {lobby && <p className="m-0 text-[14px] text-dim">Starting locks the player list, since players are the answer choices. You can reopen it later.</p>}
         </section>
 
-        <section className="glass rounded-3xl p-6">
-          <div className="mb-4"><Eyebrow>Live tallies</Eyebrow></div>
-          {state.game.status === "lobby" && <p className="text-dim text-[15px]">Tallies appear once voting starts. Only you can see them.</p>}
-          {results && state.game.status !== "lobby" && (
-            <ol className="flex flex-col divide-y divide-white/10">
-              {results.tallies.map((t) => (
-                <li key={t.question.id} className="py-3 grid gap-1 sm:grid-cols-[2rem_1fr_auto] items-baseline">
-                  <span className="text-faint tabular-nums">{t.question.position}</span>
-                  <span className="text-[15px] font-medium">{t.question.text}</span>
-                  <span className="text-[13px] text-dim sm:text-right">
-                    {t.rows.length === 0 ? "—" : t.rows.slice(0, 3).map((r) => `${r.name} ${r.count}`).join(" · ")}
-                  </span>
-                </li>
-              ))}
+        <section>
+          <div className="flex items-baseline justify-between border-b border-line pb-2">
+            <Label>Tallies, host&apos;s eyes only</Label>
+            {results && <Label>leader · votes</Label>}
+          </div>
+          {lobby && <p className="text-dim text-[15px] mt-4">Nothing to count until voting starts.</p>}
+          {results && !lobby && (
+            <ol className="m-0 p-0 list-none flex flex-col divide-y divide-line">
+              {results.tallies.map((t) => {
+                const lead = t.rows[0];
+                return (
+                  <li key={t.question.id} className="py-3 grid grid-cols-[2rem_1fr_auto] gap-3 items-baseline">
+                    <span className="mono text-[12px] text-faint">{String(t.question.position).padStart(2, "0")}</span>
+                    <span className="text-[15px] leading-snug">{t.question.text}</span>
+                    <span className="mono text-[13px] text-right whitespace-nowrap flex items-center gap-2 justify-end">
+                      {lead ? (
+                        <>
+                          <span className="w-2 h-2 rounded-full inline-block" style={{ background: colors[lead.playerId] }} aria-hidden />
+                          {lead.name} · {lead.count}
+                        </>
+                      ) : (
+                        <span className="text-faint">—</span>
+                      )}
+                    </span>
+                  </li>
+                );
+              })}
             </ol>
           )}
         </section>

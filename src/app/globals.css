@@ -3,14 +3,13 @@
 :root {
   --bg: #1e1e1e;
   --text: #fefeff;
-  --dim: rgba(254, 254, 255, 0.72);
-  --faint: rgba(254, 254, 255, 0.45);
+  --dim: rgba(254, 254, 255, 0.68);
+  --faint: rgba(254, 254, 255, 0.4);
+  --line: rgba(254, 254, 255, 0.18);
   --blue: #6489f4;
   --green: #00ed95;
   --red: #ff3a5e;
   --purple: #8d51cb;
-  --glass: rgba(254, 254, 255, 0.07);
-  --glass-border: rgba(254, 254, 255, 0.14);
 }
 
 @theme inline {
@@ -18,59 +17,102 @@
   --color-text: var(--text);
   --color-dim: var(--dim);
   --color-faint: var(--faint);
+  --color-line: var(--line);
   --color-blue: var(--blue);
   --color-green: var(--green);
   --color-red: var(--red);
   --color-purple: var(--purple);
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-sans-src);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono-src);
 }
 
 html { color-scheme: dark; }
 
 body {
   margin: 0;
-  padding: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-inter), "Inter", system-ui, sans-serif;
+  font-family: var(--font-sans-src), system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
-a { color: var(--text); text-decoration: none; }
-a:hover { color: var(--blue); }
-
-/* Headline voice: Inter 600, tight tracking */
-.display { font-weight: 600; letter-spacing: -0.02em; line-height: 1.12; }
-
-/* Surfaces and controls */
-.glass {
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
+@layer base {
+  a { color: var(--text); text-decoration: underline; text-decoration-color: var(--faint); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--text); }
 }
+
+/* Type roles. Serif for anything read aloud (questions, headlines). Mono for anything counted (codes, tallies, labels). */
+.serif { font-family: var(--font-serif), Georgia, serif; font-weight: 400; letter-spacing: -0.01em; line-height: 1.05; }
+.mono { font-family: var(--font-mono-src), ui-monospace, monospace; font-feature-settings: "tnum"; }
+.label { font-family: var(--font-mono-src), ui-monospace, monospace; font-size: 12px; color: var(--faint); letter-spacing: 0.02em; }
+
+/* The ballot: a paper slip with a perforated top edge. */
+.ballot {
+  position: relative;
+  background: #242424;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+.ballot::before {
+  content: "";
+  position: absolute;
+  left: 12px; right: 12px; top: 0;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, var(--bg) 0 6px, transparent 6px 12px);
+}
+
+/* Inputs: flat, rectangular, underline-forward. */
 .field {
-  background: rgba(254, 254, 255, 0.06);
-  border: 1px solid var(--glass-border);
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
   color: var(--text);
-  border-radius: 999px;
-  transition: border-color 150ms, background 150ms;
+  padding: 10px 0;
+  font: inherit;
+  border-radius: 0;
+  transition: border-color 150ms;
 }
 .field::placeholder { color: var(--faint); }
-.field:focus { outline: none; border-color: var(--blue); background: rgba(254, 254, 255, 0.09); }
+.field:focus { outline: none; border-bottom-color: var(--text); }
 
-/* Ornament above headlines */
-.ornament { display: flex; align-items: center; gap: 16px; color: var(--purple); font-size: 18px; }
-.ornament::before { content: ""; width: 48px; height: 1px; background: linear-gradient(90deg, transparent, var(--purple)); }
-.ornament::after { content: ""; width: 48px; height: 1px; background: linear-gradient(90deg, var(--purple), transparent); }
-
-/* Feud board panel flip */
-.panel { perspective: 1000px; }
-.panel-inner { position: relative; transform-style: preserve-3d; transition: transform 550ms cubic-bezier(0.2, 0.8, 0.2, 1); }
-.panel.open .panel-inner { transform: rotateX(180deg); }
-.panel-face { position: absolute; inset: 0; backface-visibility: hidden; display: flex; align-items: center; }
-.panel-back { transform: rotateX(180deg); }
-
-@media (prefers-reduced-motion: reduce) {
-  .panel-inner { transition: none; }
+/* Buttons: rectangular, mono label. */
+.btn {
+  font-family: var(--font-mono-src), ui-monospace, monospace;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  padding: 12px 18px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  transition: background 120ms, color 120ms, border-color 120ms;
+  cursor: pointer;
 }
+.btn:disabled { opacity: 0.35; cursor: default; }
+.btn-solid { background: var(--text); color: var(--bg); }
+.btn-solid:not(:disabled):hover { background: var(--blue); color: var(--bg); }
+.btn-line { background: transparent; color: var(--text); border-color: var(--line); }
+.btn-line:not(:disabled):hover { border-color: var(--text); }
+.btn-lg { padding: 16px 24px; font-size: 14px; }
+
+/* Punch card: 35 cells, 7 across, filled as you answer. */
+.punch { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.punch span {
+  aspect-ratio: 1;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  font-family: var(--font-mono-src), monospace;
+  font-size: 10px;
+  color: var(--faint);
+  display: flex; align-items: center; justify-content: center;
+}
+.punch span[data-done="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+.punch span[data-current="true"] { border-color: var(--text); color: var(--text); }
+
+/* Board bars grow when revealed. */
+.bar { transition: width 700ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+@media (prefers-reduced-motion: reduce) { .bar { transition: none; } }
 
 :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }

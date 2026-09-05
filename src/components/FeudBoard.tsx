@@ -1,13 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import type { QuestionTally } from "@/lib/tally";
-import { Arrow, Button, Eyebrow, Ornament } from "./ui";
+import { Button, Label } from "./ui";
 
 /**
- * Host mode. One question at a time; each answer sits behind a numbered panel
- * that flips open on click (or Space / →), highest vote count first.
+ * Host mode. One question at a time. Each answer is a bar that stays blank until
+ * revealed, then grows to its share of the vote in that player's color.
+ * Space / → reveal, ← back, Esc exit.
  */
-export function FeudBoard({ tallies, playerCount, onExit }: { tallies: QuestionTally[]; playerCount: number; onExit: () => void }) {
+export function FeudBoard({ tallies, playerCount, colors, onExit }: { tallies: QuestionTally[]; playerCount: number; colors: Record<string, string>; onExit: () => void }) {
   const [qi, setQi] = useState(0);
   const [revealed, setRevealed] = useState(0);
   const t = tallies[qi];
@@ -44,47 +45,56 @@ export function FeudBoard({ tallies, playerCount, onExit }: { tallies: QuestionT
   }
 
   if (!t) return null;
-  const top = rows[0]?.count ?? 0;
+  const max = Math.max(1, t.totalVotes);
+  const isEnd = qi === tallies.length - 1 && revealed >= rows.length;
 
   return (
-    <main className="flex-1 flex flex-col px-[clamp(16px,5vw,40px)] py-6 max-w-5xl w-full mx-auto">
-      <header className="flex items-center justify-between">
-        <Eyebrow>Question {t.question.position} of {tallies.length}</Eyebrow>
-        <Eyebrow>{t.totalVotes} of {playerCount} voted</Eyebrow>
+    <main className="flex-1 flex flex-col px-5 sm:px-10 py-6 sm:py-8 max-w-6xl w-full mx-auto">
+      <header className="flex items-baseline justify-between gap-4">
+        <Label>
+          <span className="text-text">{String(t.question.position).padStart(2, "0")}</span> / {String(tallies.length).padStart(2, "0")}
+        </Label>
+        <Label>{t.totalVotes} of {playerCount} voted</Label>
       </header>
 
-      <div className="relative flex flex-col items-center my-[clamp(24px,5vh,56px)] gap-[clamp(16px,3vh,28px)]">
-        <Ornament />
-        <h1 className="display text-[clamp(28px,5vw,52px)] text-center text-text text-balance m-0">{t.question.text}</h1>
-      </div>
+      <h1 className="serif text-[clamp(34px,6vw,84px)] m-0 mt-8 sm:mt-14 max-w-[20ch] text-balance">{t.question.text}</h1>
 
-      <ol className="relative grid gap-3 sm:grid-cols-2 max-w-4xl w-full mx-auto">
-        {rows.map((r, i) => (
-          <li key={r.playerId} className={`panel h-20 ${i < revealed ? "open" : ""}`}>
-            <button onClick={() => setRevealed(i < revealed ? i : i + 1)} className="panel-inner block w-full h-full text-left" aria-label={i < revealed ? `${r.name}, ${r.count} votes` : `Reveal answer ${i + 1}`}>
-              <span className="panel-face w-full h-full rounded-2xl glass justify-center">
-                <span className="display text-3xl text-purple">{i + 1}</span>
-              </span>
-              <span
-                className={`panel-face panel-back w-full h-full rounded-2xl px-6 justify-between ${
-                  r.count === top ? "bg-green text-bg" : "bg-text text-bg"
-                }`}
+      <ol className="m-0 p-0 list-none mt-10 sm:mt-14 flex flex-col gap-3 max-w-4xl">
+        {rows.map((r, i) => {
+          const open = i < revealed;
+          const pct = Math.round((r.count / max) * 100);
+          return (
+            <li key={r.playerId}>
+              <button
+                onClick={() => setRevealed(open ? i : i + 1)}
+                className="w-full text-left grid grid-cols-[2rem_1fr_3.5rem] items-center gap-3 h-16 sm:h-20"
+                aria-label={open ? `${r.name}, ${r.count} votes` : `Reveal answer ${i + 1}`}
               >
-                <span className="display text-2xl sm:text-3xl truncate">{r.name}</span>
-                <span className="display text-3xl sm:text-4xl tabular-nums pl-4">{r.count}</span>
-              </span>
-            </button>
-          </li>
-        ))}
-        {rows.length === 0 && <li className="text-dim text-center sm:col-span-2 py-10">No votes on this one yet.</li>}
+                <span className="mono text-[13px] text-faint">{String(i + 1).padStart(2, "0")}</span>
+                <span className="relative h-full border border-line rounded-[3px] overflow-hidden">
+                  <span
+                    className="bar absolute inset-y-0 left-0"
+                    style={{ width: open ? `${Math.max(pct, 12)}%` : "0%", background: colors[r.playerId] ?? "var(--text)" }}
+                  />
+                  <span className={`absolute inset-0 flex items-center px-4 serif text-[clamp(22px,3vw,36px)] transition-opacity duration-300 ${open ? "opacity-100 text-bg" : "opacity-0"}`}>
+                    {r.name}
+                  </span>
+                  {!open && <span className="absolute inset-0 flex items-center px-4 text-faint text-[14px]">· · ·</span>}
+                </span>
+                <span className={`mono text-[clamp(20px,2.5vw,30px)] text-right transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`}>{r.count}</span>
+              </button>
+            </li>
+          );
+        })}
+        {rows.length === 0 && <li className="text-dim py-6">No votes on this one.</li>}
       </ol>
 
-      <footer className="relative mt-auto pt-8 flex flex-wrap items-center justify-between gap-3">
-        <Button tone="glass" onClick={onExit}>Exit board</Button>
-        <div className="flex gap-3">
-          <Button tone="glass" onClick={back} disabled={qi === 0 && revealed === 0}>Back</Button>
-          <Button big onClick={advance} disabled={qi === tallies.length - 1 && revealed >= rows.length}>
-            {revealed < rows.length ? "Reveal" : qi < tallies.length - 1 ? "Next question" : "That's the game"} <Arrow />
+      <footer className="mt-auto pt-10 flex flex-wrap items-center justify-between gap-3">
+        <Button line onClick={onExit}>Exit board</Button>
+        <div className="flex gap-2">
+          <Button line onClick={back} disabled={qi === 0 && revealed === 0}>Back</Button>
+          <Button lg onClick={advance} disabled={isEnd}>
+            {revealed < rows.length ? "Reveal next" : qi < tallies.length - 1 ? "Next question" : "That's the game"}
           </Button>
         </div>
       </footer>
