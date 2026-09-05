@@ -1,8 +1,9 @@
 "use client";
 import type { StateResponse } from "../types";
 import type { QuestionTally } from "../tally";
+import type { Guess } from "../scoring";
 
-export type ResultsResponse = { status: string; playerCount: number; submitted: number; tallies: QuestionTally[] };
+export type ResultsResponse = { status: string; playerCount: number; submitted: number; tallies: QuestionTally[]; guesses: Guess[] };
 
 async function call<T>(url: string, init: RequestInit & { playerToken?: string; adminToken?: string } = {}): Promise<T> {
   const headers: Record<string, string> = { "content-type": "application/json" };
@@ -40,5 +41,9 @@ export const api = {
     }),
   removeQuestion: (code: string, adminToken: string, questionId: string) =>
     call<{ ok: true }>(`/api/games/${code}/questions`, { method: "DELETE", body: JSON.stringify({ questionId }), adminToken }),
+  setGuess: (code: string, adminToken: string, questionId: string, guesserId: string, guessedId: string | null) =>
+    call<{ ok: true }>(`/api/games/${code}/guesses`, { method: "PUT", body: JSON.stringify({ questionId, guesserId, guessedId }), adminToken }),
+  clearGuess: (code: string, adminToken: string, questionId: string, guesserId: string) =>
+    call<{ ok: true }>(`/api/games/${code}/guesses`, { method: "DELETE", body: JSON.stringify({ questionId, guesserId }), adminToken }),
   results: (code: string, adminToken: string) => call<ResultsResponse>(`/api/games/${code}/results`, { adminToken }),
 };

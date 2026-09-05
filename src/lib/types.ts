@@ -3,6 +3,7 @@ export type GameStatus = "lobby" | "voting" | "closed";
 export type GameRow = { id: string; code: string; admin_token: string; status: GameStatus; created_at: string };
 export type PlayerRow = { id: string; game_id: string; name: string; token: string; submitted_at: string | null };
 export type QuestionRow = { id: string; game_id: string; position: number; text: string };
+export type GuessRow = { id: string; game_id: string; question_id: string; guesser_id: string; guessed_id: string | null };
 export type VoteRow = { id: string; game_id: string; question_id: string; voter_id: string; target_id: string };
 
 export type PublicPlayer = { id: string; name: string; submitted: boolean };

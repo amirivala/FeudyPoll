@@ -81,7 +81,18 @@ function Dashboard({ code, adminToken }: { code: string; adminToken: string }) {
   }
 
   if (hostMode && results) {
-    return <FeudBoard tallies={results.tallies} playerCount={results.playerCount} colors={colors} onExit={() => setHostMode(false)} />;
+    return (
+      <FeudBoard
+        code={code}
+        adminToken={adminToken}
+        tallies={results.tallies}
+        players={state.players}
+        colors={colors}
+        guesses={results.guesses}
+        onGuessChanged={loadResults}
+        onExit={() => setHostMode(false)}
+      />
+    );
   }
 
   const joinHost = typeof window !== "undefined" ? window.location.host : "";

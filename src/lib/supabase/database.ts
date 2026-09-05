@@ -1,4 +1,4 @@
-import type { GameRow, PlayerRow, QuestionRow, VoteRow } from "../types";
+import type { GameRow, GuessRow, PlayerRow, QuestionRow, VoteRow } from "../types";
 
 type Table<Row, Insert> = { Row: Row; Insert: Insert; Update: Partial<Insert>; Relationships: [] };
 
@@ -8,6 +8,7 @@ export type Database = {
       games: Table<GameRow, { code: string; admin_token: string; status?: GameRow["status"] }>;
       players: Table<PlayerRow, { game_id: string; name: string; token: string; submitted_at?: string | null }>;
       questions: Table<QuestionRow, { game_id: string; position: number; text: string }>;
+      guesses: Table<GuessRow, { game_id: string; question_id: string; guesser_id: string; guessed_id: string | null }>;
       votes: Table<
         VoteRow & { updated_at: string },
         { game_id: string; question_id: string; voter_id: string; target_id: string; updated_at?: string }
